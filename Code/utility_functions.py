@@ -15,10 +15,12 @@ def import_traits_data(filepath=None, species=None, sp_coln=None):
     chap_dict = {}
     for sp, spc in zip(species, sp_coln):
         chap_dict[sp] = {}
-        for part_keys, part_dict in zip([canopy_keys, stem_keys, root_keys], ['canopy_dict', 'stem_dict', 'root_dict']):
+        for part_keys, part_dict in zip([canopy_keys, stem_keys, root_keys],
+                                    ['canopy_dict', 'stem_dict', 'root_dict']):
             chap_dict[sp][part_dict] =  {}
             for key in part_keys:
-                j = np.where(keys==key)[0][0]+1         # to account for the column of the species
+                # to account for the column of the species
+                j = np.where(keys==key)[0][0]+1
                 chap_dict[sp][part_dict][key] = sheet.col_values(spc)[j]
     return chap_dict
 
@@ -35,9 +37,12 @@ def initialize_plant(sp, params, soil_type):
     return plant
 
 def get_part(var):
-    if var in ['A_canopy', 'Gs_leaf', 'Amax', 'rho', 'lamABA', 'm']: return 'canopy_dict'
-    elif var in ['L_stem','A_stem','Ksat_stem','a_stem','c_stem', 'P50_stem']: return 'stem_dict'
-    elif var in ['L_root','A_root']: return 'root_dict'
+    if var in ['A_canopy', 'Gs_leaf', 'Amax', 'rho', 'lamABA', 'm']:
+        return 'canopy_dict'
+    elif var in ['L_stem','A_stem','Ksat_stem','a_stem','c_stem', 'P50_stem']:
+        return 'stem_dict'
+    elif var in ['L_root','A_root']:
+        return 'root_dict'
 
 def simulate_s_t_norefilling(depths, tRun, dt, sInit, plant, VPD):
     # need to incorporate the case of NO refilling (refilling==False)
@@ -100,11 +105,14 @@ def simulate_rainfall(n_trajectories, tRun, dt, lam, gam):
 
     depth = np.zeros(size)
     # the occurence of rainfall in any independent interval is lam*dt
-    depth[freqUnif<np.tile(lam,size)*dt] = depthExp[freqUnif<np.tile(lam,size)*dt] # rain falls according to prob within an increment
+    # rain falls according to prob within an increment
+    depth[freqUnif < \
+          np.tile(lam,size)*dt] = depthExp[freqUnif<np.tile(lam,size)*dt]
     depth_re = np.reshape(depth, (n_trajectories, len(tRun)))
     return depth_re
 
-def simulate_ps_t_nonlinearized(n_trajectories, tRun, dt, s0, plant, VPD, lam, alpha):
+def simulate_ps_t_nonlinearized(n_trajectories, tRun, dt, s0, plant, VPD, lam,
+                                alpha):
     Ar, Zr, n = plant.soil_root.A_root, plant.soil_root.L_root, plant.soil.n
     gam = (n*Zr*Ar)/(alpha*Ar)
 
@@ -118,7 +126,10 @@ def simulate_ps_t_nonlinearized(n_trajectories, tRun, dt, s0, plant, VPD, lam, a
     gs_samples = np.zeros_like(ps_samples)
     pl_samples = np.zeros_like(ps_samples)
     for nsim in range(n_trajectories):
-        s_t, assm_t, px_t, px_min, E_t, gs_t, pl_t = simulate_s_t_norefilling(depth_re[nsim], tRun, dt, s0, plant, VPD)
+        (s_t, assm_t, px_t,
+         px_min, E_t,
+         gs_t, pl_t) = simulate_s_t_norefilling(depth_re[nsim], tRun, dt, s0,
+                                                plant, VPD)
         ps_samples[nsim] = s_t
         assm_samples[nsim] = assm_t
         px_samples[nsim] = px_t
@@ -126,4 +137,6 @@ def simulate_ps_t_nonlinearized(n_trajectories, tRun, dt, s0, plant, VPD, lam, a
         E_samples[nsim] = E_t
         gs_samples[nsim] = gs_t
         pl_samples[nsim] = pl_t
-    return ps_samples, assm_samples, px_samples, pxmin_samples, E_samples, gs_samples, pl_samples
+        
+    return (ps_samples, assm_samples, px_samples, pxmin_samples, E_samples,
+            gs_samples, pl_samples)
